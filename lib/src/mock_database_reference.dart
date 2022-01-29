@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_database_mocks/src/mock_database_event.dart';
 import 'package:mockito/mockito.dart';
@@ -7,17 +9,22 @@ import 'mock_firebase_database.dart';
 
 class MockDatabaseReference extends Mock implements DatabaseReference {
   var _nodePath = '/';
+
   // ignore: prefer_final_fields
   static Map<String, dynamic>? _persitedData = <String, dynamic>{};
   Map<String, dynamic>? _volatileData = <String, dynamic>{};
+
   MockDatabaseReference();
+
   MockDatabaseReference._(nodePath, [this._volatileData]) {
     _nodePath += nodePath;
   }
 
+  static final _streamController = StreamController<DatabaseEvent>();
+
   /// TODO implement real [onchange] (should yield each change).
-  Stream<DatabaseEvent> get onValue async* {
-    yield await once();
+  Stream<DatabaseEvent> get onValue {
+    return _streamController.stream;
   }
 
   Map<String, dynamic>? get _data {
@@ -84,6 +91,7 @@ class MockDatabaseReference extends Mock implements DatabaseReference {
         }
       }
     }
+    _streamController.add(await once());
   }
 
   @override
@@ -115,6 +123,7 @@ class MockDatabaseReference extends Mock implements DatabaseReference {
       }
       _data = data;
     }
+    _streamController.add(await once());
   }
 
   Map<String, dynamic>? _buildNewNodesTree({
@@ -181,13 +190,14 @@ class MockDatabaseReference extends Mock implements DatabaseReference {
 
 class _Int {
   int value;
+
   _Int(this.value);
+
   _Int increment() {
     ++value;
     return this;
   }
 }
-
 
 // Map<String, dynamic> _makeSupportGenericValue(Map<String, dynamic> data) {
 //   var _dataWithGenericValue = {'__generic_mock_data_value__': Object()};
