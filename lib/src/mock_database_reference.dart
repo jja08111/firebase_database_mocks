@@ -11,16 +11,21 @@ class MockDatabaseReference extends Mock implements DatabaseReference {
   var _nodePath = '/';
 
   // ignore: prefer_final_fields
-  static Map<String, dynamic>? _persitedData = <String, dynamic>{};
+  final Map<String, dynamic> _persistedData;
   Map<String, dynamic>? _volatileData = <String, dynamic>{};
 
-  MockDatabaseReference();
+  MockDatabaseReference(this._streamController, this._persistedData);
 
-  MockDatabaseReference._(nodePath, [this._volatileData]) {
+  MockDatabaseReference._(
+    nodePath,
+    this._streamController,
+    this._persistedData, [
+    this._volatileData,
+  ]) {
     _nodePath += nodePath;
   }
 
-  static final _streamController = StreamController<DatabaseEvent>.broadcast();
+  final StreamController<DatabaseEvent> _streamController;
 
   /// TODO implement real [onchange] (should yield each change).
   Stream<DatabaseEvent> get onValue {
@@ -29,14 +34,16 @@ class MockDatabaseReference extends Mock implements DatabaseReference {
 
   Map<String, dynamic>? get _data {
     if (MockFirebaseDatabase.persistData) {
-      return _persitedData;
+      return _persistedData;
     }
     return _volatileData;
   }
 
   set _data(data) {
     if (MockFirebaseDatabase.persistData) {
-      _persitedData = data;
+      final newData = Map<String, dynamic>.from(data);
+      _persistedData.clear();
+      _persistedData.addAll(newData);
     } else
       return _volatileData = data;
   }
@@ -50,6 +57,8 @@ class MockDatabaseReference extends Mock implements DatabaseReference {
     path = (_nodePath + path).replaceAll(RegExp(r'^/+'), '');
     return MockDatabaseReference._(
       path,
+      _streamController,
+      _persistedData,
       _data,
     );
   }
