@@ -86,6 +86,37 @@ class MockDatabaseReference extends Mock implements DatabaseReference {
     }
   }
 
+  @override
+  Future<void> update(Map<String, Object?> value) async {
+    final data = _data;
+    if (_nodePath == '/') {
+      _data = data == null ? value : data
+        ..addAll(value);
+    } else {
+      var nodePath = _nodePath.substring(1, _nodePath.length - 1);
+      var nodeList = nodePath.split('/');
+      var node = data;
+
+      for (var i = 0; i < nodeList.length; i++) {
+        nodePath = nodeList[i];
+        if (i == nodeList.length - 1) {
+          var nextNode = node![nodePath];
+          if (nextNode != null) {
+            nextNode.addAll(value);
+          } else {
+            node.addAll({nodePath: value});
+          }
+        } else {
+          if (node![nodePath] == null) {
+            node.addAll({nodePath: <String, Object?>{}});
+          }
+          node = node[nodePath];
+        }
+      }
+      _data = data;
+    }
+  }
+
   Map<String, dynamic>? _buildNewNodesTree({
     required dynamic data,
     required List<String> nodesList,
