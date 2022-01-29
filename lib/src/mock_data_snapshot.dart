@@ -8,4 +8,6 @@ class MockDataSnapshot extends Mock implements DataSnapshot {
 
   @override
   dynamic get value => _value;
+
+  bool get exists => _value != null;
 }
