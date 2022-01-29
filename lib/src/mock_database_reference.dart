@@ -20,10 +20,14 @@ class MockDatabaseReference extends Mock implements DatabaseReference {
     _nodePath += nodePath;
   }
 
-  static final _streamController = StreamController<DatabaseEvent>();
+  static StreamController<DatabaseEvent> _streamController = StreamController<DatabaseEvent>();
 
   /// TODO implement real [onchange] (should yield each change).
   Stream<DatabaseEvent> get onValue {
+    if (_streamController.hasListener) {
+      _streamController.close();
+      _streamController = StreamController<DatabaseEvent>();
+    }
     return _streamController.stream;
   }
 
