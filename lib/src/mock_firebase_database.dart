@@ -11,20 +11,28 @@ class MockFirebaseDatabase extends Mock implements FirebaseDatabase {
   static get persistData => _persistData;
 
   final Map<String, dynamic> _persistedData = <String, dynamic>{};
-  final _streamController = StreamController<DatabaseEvent>();
+  final Map<String, dynamic> _streamMap = {};
 
   @override
   DatabaseReference reference() => ref();
 
   @override
   DatabaseReference ref([String? path]) {
+    final StreamController<DatabaseEvent> controller;
+    if (_streamMap.containsKey(path)) {
+      controller = _streamMap[path];
+    } else {
+      controller = StreamController();
+      _streamMap.addAll({path ?? '/': controller});
+    }
+
     if (path != null) {
       return MockDatabaseReference(
-        _streamController,
+        controller,
         _persistedData,
       ).child(path);
     }
-    return MockDatabaseReference(_streamController, _persistedData);
+    return MockDatabaseReference(controller, _persistedData);
   }
 
   // ignore: unused_field
